@@ -6,9 +6,10 @@ import (
 )
 
 func TestLinkDB(t *testing.T) {
-	// assert := assert.New(t)
-
+	var client Client
+	db := client.Open("host=localhost port=5432 user=ivan dbname=short_link_development password=1234 sslmode=disable")
+	var url Url
 	// assert for nil (good for errors)
-	assert.Nil(t, object)
+	assert.Nil(t, url.CreateTableIfExist(Schema, db), error)
 
 }
