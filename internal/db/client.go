@@ -1,28 +1,26 @@
 package db
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"log"
 )
 
 type Client struct {
-	db             *sql.DB
+	db             *sqlx.DB
 	logger         log.Logger
 	maxConnections int
 }
 
 // Open connection to PostgreSQL.
 func (c *Client) Open(dataSourceName string) error {
-	db, err := sql.Open("postgres", dataSourceName)
-
-	if c.maxConnections > 0 {
-		db.SetMaxOpenConns(c.maxConnections)
-	}
+	db, error := sqlx.Connect("postgres", dataSourceName)
 	c.db = db
+	return error
 }
 
 // Close closes PostgreSQL connection.
 func (c *Client) Close() error {
-	c.db.Close()
+	error := c.db.Close()
+	return error
 }
