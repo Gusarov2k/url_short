@@ -8,14 +8,20 @@ import (
 
 type Client struct {
 	db             *sqlx.DB
-	logger         log.Logger
+	logger         *log.Logger
 	maxConnections int
 }
 
 // Open connection to PostgreSQL.
 func (c *Client) Open(dataSourceName string) error {
-	db, error := sqlx.Connect("postgres", dataSourceName)
+	db, error := sqlx.Open("postgres", dataSourceName)
+	if c.maxConnections > 0 {
+		db.SetMaxOpenConns(c.maxConnections)
+	}
+
+	// c.logger = log.New(db, "INFO: ", log.Ldate|log.Lshortfile)
 	c.db = db
+
 	return error
 }
 

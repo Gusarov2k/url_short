@@ -1,7 +1,7 @@
 package db
 
 import (
-	// "context"
+	"context"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -11,15 +11,34 @@ type Url struct {
 	Code string `json:"code"`
 }
 
-// type UrlRepository interface {
-// 	CreateTable(query string) error
-// }
+type UrlRepository interface {
+	// CreateTable(schema string) error
+	Create(ctx context.Context, u Url) (int64, error)
+}
 
-// func CreateTableIfExist(urlRepository UrlRepository) {
-// 	urlRepository.CreateTable()
-// }
+func ConnToDB(Conn *sqlx.DB) UrlRepository {
+	return &Client{
+		db: Conn,
+	}
+}
 
-func (u Url) CreateTableIfExist(schema string, con sqlx.DB) error {
-	error := con.MustExec(schema)
-	return error
+func (con *Client) CreateTableIsfExist(schema string) {
+	con.db.MustExec(schema)
+}
+
+func (con *Client) Create(ctx context.Context, u Url) (int64, error) {
+	query := "Insert urls SET url=?, code=?"
+
+	stmt, error := con.db.PrepareContext(ctx, query)
+	if error != nil {
+		return -1, error
+	}
+
+	res, error := stmt.ExecContext(ctx, u.Url, u.Code)
+
+	if error != nil {
+		return -1, error
+	}
+
+	return res.LastInsertId()
 }
