@@ -12,7 +12,6 @@ type Url struct {
 }
 
 type UrlRepository interface {
-	// CreateTable(schema string) error
 	Create(ctx context.Context, u Url) (int64, error)
 }
 
