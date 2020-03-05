@@ -1,35 +1,32 @@
-package db
+package db_test
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
+	"github.com/Gusarov2k/url_short"
+	"github.com/Gusarov2k/url_short/internal/db"
 	"testing"
 )
 
-var client Client
+func TestURLsRepo_Create(t *testing.T) {
+	setUp(t)
 
-func TestLinkDB(t *testing.T) {
-	err := client.Open("host=localhost port=5432 user=ivan dbname=short_link_test password=1234 sslmode=disable")
+	c := pg.NewClient()
+	if err := c.Open(PostgresTest); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = c.Close() }()
 
-	assert.Nil(t, err, nil)
+	u := shorten.URL{
+		Code: "some_code",
+		URL:  "http://example.org",
+	}
 
-}
+	r := pg.NewURLRepository(c)
+	if err := r.Create(context.Background(), &u); err != nil {
+		t.Fatal(err)
+	}
 
-func TestCloseLinkDB(t *testing.T) {
-	client.Open("host=localhost port=5432 user=ivan dbname=short_link_test password=1234 sslmode=disable")
-	err := client.Close()
-	assert.Nil(t, err, nil)
-}
-
-func TestCreateTables(t *testing.T) {
-
-	client.Open("host=localhost port=5432 user=ivan dbname=short_link_test password=1234 sslmode=disable")
-	client.CreateTableIsfExist(Schema)
-	// assert.Nil(t, err, nil)
-}
-
-func TestCreateUrl(t *testing.T) {
-	var url = Url{Url: "test", Code: "code test"}
-	client.Open("host=localhost port=5432 user=ivan dbname=short_link_test password=1234 sslmode=disable")
-	client.Create(url)
-	// assert.Nil(t, err, nil)
+	if u.ID != 1 {
+		t.Fatal("bad url id, expected 1, but got: ", u.ID)
+	}
 }

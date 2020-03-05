@@ -1,32 +1,41 @@
 package db
 
 import (
+	"github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
+)
+
+const (
+	defaultMaxConnections = 5
 )
 
 type Client struct {
 	db             *sqlx.DB
-	logger         *log.Logger
+	logger         log.Logger
 	maxConnections int
 }
 
 // Open connection to PostgreSQL.
 func (c *Client) Open(dataSourceName string) error {
-	db, error := sqlx.Open("postgres", dataSourceName)
-	if c.maxConnections > 0 {
-		db.SetMaxOpenConns(c.maxConnections)
+	var err error
+
+	c.logger.Log("level", "debug", "msg", "connecting to db")
+	if c.db, err = sqlx.Open("postgres", dataSourceName); err != nil {
+		c.logger.Log("level", "debug", "msg", "test")
+		return err
 	}
+	if err = c.db.Ping(); err != nil {
+		return err
+	}
+	c.db.SetMaxOpenConns(c.maxConnections)
+	c.db.SetMaxIdleConns(c.maxConnections)
+	c.logger.Log("level", "debug", "msg", "connected to db")
 
-	// c.logger = log.New(db, "INFO: ", log.Ldate|log.Lshortfile)
-	c.db = db
-
-	return error
+	return nil
 }
 
 // Close closes PostgreSQL connection.
 func (c *Client) Close() error {
-	error := c.db.Close()
-	return error
+	return c.db.Close()
 }
