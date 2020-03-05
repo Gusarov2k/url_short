@@ -51,7 +51,7 @@ func clearSQLDb(t *testing.T) {
 	}
 
 	// Create schema
-	c := pg.NewClient()
+	c := db.NewClient()
 	if err = c.Open(PostgresTest); err != nil {
 		t.Fatal(err)
 	}
