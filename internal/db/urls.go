@@ -2,42 +2,62 @@ package db
 
 import (
 	"context"
-	"github.com/jmoiron/sqlx"
+	"database/sql"
+	"errors"
+
+	"github.com/Gusarov2k/url_short"
 )
 
-type Url struct {
-	ID   int    `json:"id"`
-	Url  string `json:"url"`
-	Code string `json:"code"`
+const (
+	msgURLInsertFailed = "Insert to url failed"
+	msgURLNotFound     = "URL not found"
+	msgURLScanFailed   = "Scan failed"
+)
+
+// urlsRepo is a service for managing URLs.
+type urlsRepo struct {
+	client *Client
 }
 
-type UrlRepository interface {
-	Create(ctx context.Context, u Url) (int64, error)
+// NewURLRepository creates a new NewURLRepository instance backed by Postgres.
+func NewURLRepository(c *Client) shorten.URLRepository {
+	return &urlsRepo{client: c}
 }
 
-func ConnToDB(Conn *sqlx.DB) UrlRepository {
-	return &Client{
-		db: Conn,
+// Create URLs's information into repository.
+func (r *urlsRepo) Create(ctx context.Context, u *shorten.URL) error {
+	row := r.client.db.QueryRowContext(
+		ctx,
+		urlInsert,
+		u.Code,
+		u.URL,
+	)
+
+	return shorten.WrapError(row.Scan(&u.ID), shorten.ErrInternal, msgURLInsertFailed)
+}
+
+// ByCode returns an URL object by code.
+func (r *urlsRepo) ByCode(ctx context.Context, code string) (shorten.URL, error) {
+	row := r.client.db.QueryRowContext(ctx, urlByCode, code)
+
+	return scanURL(row)
+}
+
+func scanURL(rowScanner interface {
+	Scan(dest ...interface{}) error
+}) (shorten.URL, error) {
+	var u shorten.URL
+	err := rowScanner.Scan(
+		&u.ID,
+		&u.Code,
+		&u.URL,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return u, shorten.NewError(shorten.ErrURLNotFound, msgURLNotFound)
+		}
+		return u, shorten.WrapError(err, shorten.ErrInternal, msgURLScanFailed)
 	}
-}
-
-func (con *Client) CreateTableIsfExist(schema string) {
-	con.db.MustExec(schema)
-}
-
-func (con *Client) Create(ctx context.Context, u Url) (int64, error) {
-	query := "Insert urls SET url=?, code=?"
-
-	stmt, error := con.db.PrepareContext(ctx, query)
-	if error != nil {
-		return -1, error
-	}
-
-	res, error := stmt.ExecContext(ctx, u.Url, u.Code)
-
-	if error != nil {
-		return -1, error
-	}
-
-	return res.LastInsertId()
+	return u, nil
 }

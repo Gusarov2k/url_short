@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
+	"github.com/go-kit/kit/log"
 	_ "github.com/lib/pq"
 )
 
@@ -39,3 +39,21 @@ func (c *Client) Open(dataSourceName string) error {
 func (c *Client) Close() error {
 	return c.db.Close()
 }
+
+// InitSchema sets up the initial schema.
+func (c *Client) InitSchema() error {
+	_, err := c.db.Exec(Schema)
+	return err
+}
+
+// Queries
+const (
+	urlInsert = `
+INSERT INTO urls (code, original_url)
+  VALUES ($1, $2)
+RETURNING urls.id`
+	urlByCode = `
+SELECT id, code, original_url
+FROM urls
+WHERE code = $1`
+)

@@ -1,11 +1,12 @@
 package db_test
 
 import (
-	"fmt"
-	"github.com/Gusarov2k/url_short/internal/db"
 	"github.com/jmoiron/sqlx"
+	"fmt"
 	"os"
 	"testing"
+
+	"github.com/Gusarov2k/url_short/internal/db"
 )
 
 var (
@@ -51,7 +52,7 @@ func clearSQLDb(t *testing.T) {
 	}
 
 	// Create schema
-	c := pg.NewClient()
+	c := db.NewClient()
 	if err = c.Open(PostgresTest); err != nil {
 		t.Fatal(err)
 	}
