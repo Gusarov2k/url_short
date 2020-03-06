@@ -1,7 +1,7 @@
 package db_test
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 	"fmt"
 	"os"
 	"testing"
@@ -35,7 +35,7 @@ func clearSQLDb(t *testing.T) {
 	t.Helper()
 	var err error
 
-	pool, err := sql.Open("postgres", PostgresSys)
+	pool, err := sqlx.Open("postgres", PostgresSys)
 	if err != nil {
 		t.Fatal("can't connect to db")
 	}
