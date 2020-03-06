@@ -1,8 +1,8 @@
 package db
 
 import (
+	"database/sql"
 	"github.com/go-kit/kit/log"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -11,7 +11,7 @@ const (
 )
 
 type Client struct {
-	db             *sqlx.DB
+	db             *sql.DB
 	logger         log.Logger
 	maxConnections int
 }
@@ -21,7 +21,7 @@ func (c *Client) Open(dataSourceName string) error {
 	var err error
 
 	c.logger.Log("level", "debug", "msg", "connecting to db")
-	if c.db, err = sqlx.Open("postgres", dataSourceName); err != nil {
+	if c.db, err = sql.Open("postgres", dataSourceName); err != nil {
 		c.logger.Log("level", "debug", "msg", "test")
 		return err
 	}
